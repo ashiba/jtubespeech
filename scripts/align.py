@@ -205,10 +205,10 @@ def find_files(wavdir, txtdir):
     for wav in wavdir.glob("**/*.wav"):
         stem = wav.stem
         txt = None
-        if stem in stem_dict: # O(1)
+        if stem in txt_stem_dict: # O(1)
             if txt is not None:
                 raise ValueError(f"Duplicate found: {stem}")
-            txt = stem_dict[stem]
+            txt = txt_stem_dict[stem]
         if txt is None:
             logging.error(f"No text found for {stem}.wav")
         else:
@@ -334,13 +334,13 @@ def align(
         utterance_list = [
             item.replace("\t", " ").replace("\n", "") for item in utterance_list
         ]
-        text = []
+        cleaned_text_list = []
         for i, utt in enumerate(utterance_list):
             utt_start, utt_end, utt_txt = utt.split(" ", 2)
             # text processing
             utt_txt = text_processing(utt_txt)
             cleaned = aligner.preprocess_fn.text_cleaner(utt_txt)
-            text.append(f"{stem}_{i:04} {cleaned}")
+            cleaned_text_list.append(f"{stem}_{i:04} {cleaned}")
 
         # audio
         speech, sample_rate = soundfile.read(wav)
@@ -379,7 +379,7 @@ def align(
                     f"got {lpz.shape[0]}-{expected_lpz_length} expected."
                 )
             task = aligner.prepare_segmentation_task(
-                text, lpz, name=stem, speech_len=speech_len
+                cleaned_text_list, lpz, name=stem, speech_len=speech_len
             )
             # align (done by worker)
             task_queue.put(task)
