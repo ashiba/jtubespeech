@@ -195,14 +195,17 @@ def find_files(wavdir, txtdir):
     """Search for files in given directories."""
     files_dict = {}
     dir_txt_list = list(txtdir.glob("**/*.txt"))
+    txt_stem_dict = dict()
+    for item in dir_txt_list:
+        txt_stem_dict[item.stem] = item
+        
     for wav in wavdir.glob("**/*.wav"):
         stem = wav.stem
         txt = None
-        for item in dir_txt_list:
-            if item.stem == stem:
-                if txt is not None:
-                    raise ValueError(f"Duplicate found: {stem}")
-                txt = item
+        if stem in txt_stem_dict: # O(1)
+            if txt is not None:
+                raise ValueError(f"Duplicate found: {stem}")
+            txt = txt_stem_dict[stem]
         if txt is None:
             logging.error(f"No text found for {stem}.wav")
         else:
