@@ -196,7 +196,7 @@ def align_worker(in_queue, out_queue, num=0):
 
 def listen_worker(in_queue, segments="./segments.txt"):
     print("listen_worker started.")
-    with open(segments, "w") as f:
+    with open(segments, "a") as f:
         for item in iter(in_queue.get, "STOP"):
             if segments is None:
                 print(item)
@@ -206,8 +206,16 @@ def listen_worker(in_queue, segments="./segments.txt"):
     print("listen_worker ended.")
 
 
-def find_files(wavdir, txtdir):
+def find_files(wavdir, txtdir, segments):
     """Search for files in given directories."""
+
+    # stems aligned before
+    aligned_stems_set = set()
+    with open(segments) as f:
+        for line in f.readlines():
+            stem = line.split(' ')[1]
+            aligned_stems_set.add(stem)
+
     files_dict = {}
     dir_txt_list = list(txtdir.glob("**/*.txt"))
     txt_stem_dict = dict()
@@ -216,6 +224,11 @@ def find_files(wavdir, txtdir):
         
     for wav in wavdir.glob("**/*.wav"):
         stem = wav.stem
+
+        # Skip if aligned before
+        if stem in aligned_stems_set:
+            continue
+
         txt = None
         if stem in txt_stem_dict: # O(1)
             if txt is not None:
@@ -319,7 +332,7 @@ def align(
     done_queue = Queue()
 
     # find files
-    files_dict = find_files(wavdir, txtdir)
+    files_dict = find_files(wavdir, txtdir, segments)
     num_files = len(files_dict)
     logging.info(f"Found {num_files} files.")
 
