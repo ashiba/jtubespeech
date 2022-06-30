@@ -78,7 +78,19 @@ def text_processing(utt_txt):
     utt_txt = utt_txt.replace('"', "").replace(",", "")
     # replace all the numbers
     numbers = re.findall(r"\d+\.?\d*", utt_txt)
-    transcribed_numbers = [num2words(item, lang="ja") for item in numbers]
+
+    # num2words raises OverflowError when item is more than or equal to 1000000000000000000000000000000000000000000000000000
+    transcribed_numbers = []
+    for item in numbers:
+        transcribed_num = ""
+        try:
+            transcribed_num = num2words(item, lang="ja")
+        except OverflowError:
+            transcribed_num = "HUGE NUMBER"
+            logger.info(f"Caught OverflowError from num2words. item is {item}')
+
+        transcribed_numbers.append(transcribed_num)
+
     for nr in range(len(numbers)):
         old_nr = numbers[nr]
         new_nr = transcribed_numbers[nr]
