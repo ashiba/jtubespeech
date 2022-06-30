@@ -167,7 +167,10 @@ def align_worker(in_queue, out_queue, num=0):
             out_queue.put(segments_str)
             # calculate average score
             scores = [boundary[2] for boundary in task.segments]
-            avg = sum(scores) / len(scores)
+            if len(scores) == 0:
+                avg = 0.0
+            else:
+                avg = sum(scores) / len(scores)
             logging.info(f"Aligned {task.name} with avg score {avg:3.4f}")
         except (AssertionError, IndexError) as e:
             # AssertionError: Audio is shorter than ground truth
